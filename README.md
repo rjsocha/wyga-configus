@@ -29,12 +29,12 @@ ${VARIABLE_NAME}
 
 ### Macros
 
-  With version 1.6 simple macro engine was introduced. 
+  With version 1.6 simple macro engine was introduced.
 
   Usage:
 
 ```
-@{{NAME}} 
+@{{NAME}}
 ```
   This will be evauluated by Configus as environmental variable MACRO_NAME
 

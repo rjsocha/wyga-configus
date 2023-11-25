@@ -54,6 +54,10 @@ local _src _dst _base
   _src="$(processMacro "$1")" || _panic "unable to evalute macro for %s" "$1"
   _dst="$(processMacro "$2")" || _panic "unable to evalute macro for %s" "$2"
   _base="$(dirname "${_dst}")"
+  if ! printf -- "${_src}" | fgrep -q "/"
+  then
+    _src="${SERVICE}/${_src}"
+  fi
   mkdir -p "${_base}" 2>/dev/null || _panic "unable to create '%s' directory" "${_base}"
   getConfig "${_src}" "${_dst}" || _panic "unable to acquire '%s' configuration" "${_src}"
 }
@@ -107,8 +111,9 @@ local _template
 _main() {
   if [ -n "${1:-}" ] && [ -n "${CONFIGUS_ENDPOINT:-}" ]
   then
+    SERVICE="${1}"
     TFILE=$(mktemp -q -t cs.XXXXXX) || _panic "unable to start config-service (read-only filesystem?)"
-    _service="$1/config"
+    _service="${SERVICE}/config"
     if ! printf -- "%s" "${CONFIGUS_ENDPOINT}" | egrep -q "^http://"
     then
       CONFIGUS_ENDPOINT="http://${CONFIGUS_ENDPOINT}:1236"

@@ -24,7 +24,7 @@
 #endif
 
 #define PONG      "PONG"
-#define VERSION   "1.6.0"
+#define VERSION   "1.6.1"
 
 #define CFGURL    "/cfg/"
 #define DEFAULT_CONFIG_DIR "/depot"
@@ -114,7 +114,7 @@ long int size=0;
       const char *default_start;
       const char *default_end;
       char c;
-        
+
       if (*input++ != '{') continue;
       if (*input++ != '{') continue;
 
