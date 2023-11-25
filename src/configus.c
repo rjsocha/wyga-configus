@@ -24,7 +24,7 @@
 #endif
 
 #define PONG      "PONG"
-#define VERSION   "1.6.1"
+#define VERSION   "1.6.2"
 
 #define CFGURL    "/cfg/"
 #define DEFAULT_CONFIG_DIR "/depot"
@@ -248,7 +248,7 @@ int cfglen = strlen(CFGURL);
   now = time(NULL);
   timeinfo = localtime ( &now);
   strftime(date,sizeof(date),"%Y/%m/%d %H:%M:%S",timeinfo);
-  printf("%s config-service %s %d %.*s %.*s\n",date,ip,status,method.len,method.buf,url.len,url.buf);
+  printf("%s configus %s %d %.*s %.*s\n",date,ip,status,method.len,method.buf,url.len,url.buf);
   fflush(stdout);
   http_response_status(response, status);
   http_respond(request, response);
@@ -286,13 +286,13 @@ char *config;
 
 int main() {
 char *listen;
-int port=1236;
+int port=80;
   // only port number supported
   listen=getenv("CONFIGUS_LISTEN");
   if(listen != NULL) {
     port=atoi(listen);
-    if(port<1023 || port > 65535) {
-      port = 1236;
+    if(port<1 || port > 65535) {
+      port = 80;
     }
   }
   printf("CONFIGUS SERVIVCE VERSION %s READY AT 0.0.0.0:%d ON linux/%s (%d/%d)\n",VERSION,port,APPARCH,geteuid(),getegid());

@@ -15,7 +15,6 @@ local _count _info _src _dst _url
   _dst="$2"
   _url="${CONFIGUS_ENDPOINT}/cfg/${_src}"
   _count=0
-  printf -- '::CONFIGUS acquiring configuration from "%s"\n' "${_url}"
   while true
   do
     if wget -q -T 5 -O "${_dst}" "${_url}" 2>/dev/null
@@ -30,7 +29,7 @@ local _count _info _src _dst _url
       printf -- '::CONFIGUS still waiting for configuration from "%s"\n' "${_url}"
       _count=0
     fi
-    sleep 0.33
+    sleep 0.5
   done
 }
 
@@ -112,11 +111,11 @@ _main() {
   if [ -n "${1:-}" ] && [ -n "${CONFIGUS_ENDPOINT:-}" ]
   then
     SERVICE="${1}"
-    TFILE=$(mktemp -q -t cs.XXXXXX) || _panic "unable to start config-service (read-only filesystem?)"
+    TFILE=$(mktemp -q -p /dev/shm -t cs.XXXXXX) || _panic "unable to start config-service (read-only filesystem?)"
     _service="${SERVICE}/config"
     if ! printf -- "%s" "${CONFIGUS_ENDPOINT}" | egrep -q "^http://"
     then
-      CONFIGUS_ENDPOINT="http://${CONFIGUS_ENDPOINT}:1236"
+      CONFIGUS_ENDPOINT="http://${CONFIGUS_ENDPOINT}"
     fi
     getConfig "${_service}" "${TFILE}" || _panic "unable to acquire '%s' configuration" "${_service}/config"
     processConfig "${_service}" "${TFILE}"
