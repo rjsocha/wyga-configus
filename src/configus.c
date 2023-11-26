@@ -24,7 +24,7 @@
 #endif
 
 #define PONG      "PONG"
-#define VERSION   "1.6.2"
+#define VERSION   "1.6.X"
 
 #define CFGURL    "/cfg/"
 #define DEFAULT_CONFIG_DIR "/depot"
