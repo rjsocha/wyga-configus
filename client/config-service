@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+umask 0022
 TFILE=""
 
 cleanup() {
@@ -19,17 +20,17 @@ local _count _info _src _dst _url
   do
     if wget -q -T 5 -O "${_dst}" "${_url}" 2>/dev/null
     then
-      printf -- '::CONFIGUS configuration acquired from "%s"\n' "${_url}"
+      printf -- '::CONFIGUS configuration fetched from "%s"\n' "${_url}"
       break
     fi
     _count=$(expr "${_count}" + 1)
     _info=$(expr "${_count}" % 20) || true
     if [ ${_info} -eq 0 ]
     then
-      printf -- '::CONFIGUS still waiting for configuration from "%s"\n' "${_url}"
+      printf -- '::CONFIGUS still awaiting configuration from "%s"\n' "${_url}"
       _count=0
     fi
-    sleep 0.5
+    sleep 0.3
   done
 }
 
@@ -50,8 +51,8 @@ local _inp _macro _eval
 
 getCommand() {
 local _src _dst _base
-  _src="$(processMacro "$1")" || _panic "unable to evalute macro for %s" "$1"
-  _dst="$(processMacro "$2")" || _panic "unable to evalute macro for %s" "$2"
+  _src="$(processMacro "$1")" || _panic 'unable to evalute macro for "%s"' "$1"
+  _dst="$(processMacro "$2")" || _panic 'unable to evalute macro for "%s"' "$2"
   if ! printf -- "${_src}" | fgrep -q "/"
   then
     _src="${SERVICE}/${_src}"
@@ -62,8 +63,8 @@ local _src _dst _base
     _dst="/config/${SERVICE}/${_dst}"
   fi
   _base="$(dirname "${_dst}")"
-  mkdir -p "${_base}" 2>/dev/null || _panic "unable to create '%s' directory" "${_base}"
-  getConfig "${_src}" "${_dst}" || _panic "unable to acquire '%s' configuration" "${_src}"
+  mkdir -p "${_base}" 2>/dev/null || _panic 'unable to create "%s" directory' "${_base}"
+  getConfig "${_src}" "${_dst}" || _panic 'failed to retrieve "%s" configuration' "${_src}"
 }
 
 parseConfig() {
@@ -78,13 +79,13 @@ local _lno _source _line _command _opt1 _opt2
       shift
       if [ $# -ne 2 ]
       then
-        _panic "wrong number of arguments for command :GET at line %s of %s" "${_lno}" "${_source}"
+        _panic 'wrong number of arguments for command :GET at line %s in %s' "${_lno}" "${_source}"
         return
       fi
       getCommand "$@"
       ;;
     *)
-      _panic "unsupported config command %s at line %s of %s" "${_command}" "${_lno}" "${_source}"
+      _panic 'unsupported configuration command "%s" at line %s in %s' "${_command}" "${_lno}" "${_source}"
   esac
 }
 
@@ -122,11 +123,10 @@ _main() {
     then
       CONFIGUS_ENDPOINT="http://${CONFIGUS_ENDPOINT}"
     fi
-    getConfig "${_service}" "${TFILE}" || _panic "unable to acquire '%s' configuration" "${_service}/config"
+    getConfig "${_service}" "${TFILE}" || _panic 'failed to retrieve "%s" configuration' "${_service}/config"
     processConfig "${_service}" "${TFILE}"
   fi
 }
 
 trap cleanup EXIT
-umask 0022
 _main "$@"
