@@ -57,6 +57,12 @@ local _src _dst _base
   then
     _src="${SERVICE}/${_src}"
   fi
+  if printf -- "${_dst}" | grep -q "^@"
+  then
+    _dst="$(printf -- "${_dst}" | cut -c 2-)"
+    _dst="/config/${SERVICE}/${_dst}"
+  fi
+
   mkdir -p "${_base}" 2>/dev/null || _panic "unable to create '%s' directory" "${_base}"
   getConfig "${_src}" "${_dst}" || _panic "unable to acquire '%s' configuration" "${_src}"
 }
@@ -123,4 +129,5 @@ _main() {
 }
 
 trap cleanup EXIT
+umask 0022
 _main "$@"
