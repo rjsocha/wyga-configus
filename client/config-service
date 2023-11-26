@@ -52,7 +52,6 @@ getCommand() {
 local _src _dst _base
   _src="$(processMacro "$1")" || _panic "unable to evalute macro for %s" "$1"
   _dst="$(processMacro "$2")" || _panic "unable to evalute macro for %s" "$2"
-  _base="$(dirname "${_dst}")"
   if ! printf -- "${_src}" | fgrep -q "/"
   then
     _src="${SERVICE}/${_src}"
@@ -62,7 +61,7 @@ local _src _dst _base
     _dst="$(printf -- "${_dst}" | cut -c 2-)"
     _dst="/config/${SERVICE}/${_dst}"
   fi
-
+  _base="$(dirname "${_dst}")"
   mkdir -p "${_base}" 2>/dev/null || _panic "unable to create '%s' directory" "${_base}"
   getConfig "${_src}" "${_dst}" || _panic "unable to acquire '%s' configuration" "${_src}"
 }
