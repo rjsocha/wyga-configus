@@ -1,4 +1,5 @@
 #!/bin/sh
+#2023112801
 set -eu
 umask 0022
 TFILE=""
@@ -60,7 +61,7 @@ local _src _dst _base
   if printf -- "${_dst}" | grep -q "^@"
   then
     _dst="$(printf -- "${_dst}" | cut -c 2-)"
-    _dst="/config/${SERVICE}/${_dst}"
+    _dst="${CONFIG}/${_dst}"
   fi
   _base="$(dirname "${_dst}")"
   mkdir -p "${_base}" 2>/dev/null || _panic 'unable to create "%s" directory' "${_base}"
@@ -117,13 +118,19 @@ _main() {
   if [ -n "${1:-}" ] && [ -n "${CONFIGUS_ENDPOINT:-}" ]
   then
     SERVICE="${1}"
+    if [ -s /.metadata/configus ]
+    then
+      CONFIG="$(cat /.metadata/configus)"
+    else
+      CONFIG="${SERVICE}"
+    fi
     TFILE=$(mktemp -q -p /dev/shm -t cs.XXXXXX) || _panic "unable to start config-service (read-only filesystem?)"
     _service="${SERVICE}/config"
     if ! printf -- "%s" "${CONFIGUS_ENDPOINT}" | egrep -q "^http://"
     then
       CONFIGUS_ENDPOINT="http://${CONFIGUS_ENDPOINT}"
     fi
-    getConfig "${_service}" "${TFILE}" || _panic 'failed to retrieve "%s" configuration' "${_service}/config"
+    getConfig "${_service}" "${TFILE}" || _panic 'failed to retrieve "%s" configuration' "${_service}"
     processConfig "${_service}" "${TFILE}"
   fi
 }
