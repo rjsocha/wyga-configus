@@ -122,7 +122,7 @@ _main() {
     then
       CONFIG="$(cat /.metadata/configus)"
     else
-      CONFIG="${SERVICE}"
+      CONFIG="/config/${SERVICE}"
     fi
     TFILE=$(mktemp -q -p /dev/shm -t cs.XXXXXX) || _panic "unable to start config-service (read-only filesystem?)"
     _service="${SERVICE}/config"
