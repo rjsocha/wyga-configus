@@ -1,6 +1,7 @@
 #!/bin/sh
 #2024030801
 set -eu
+set -x
 umask 0022
 TFILE=""
 
@@ -19,8 +20,11 @@ local _count _info _src _dst _url
   _count=0
   while true
   do
-    if wget -q -T 5 -O "${_dst}" "${_url}"
+    if wget -q -T 5 -O "${_dst}" "${_url}" 2>/dev/null
     then
+      printf -- "UMASK: %s\n" "$(umask)"
+      printf -- "DIR: %s\n", "$(ls -ld $(dirname ${_dst}))"
+      ls -l "${_dst}"
       printf -- '::CONFIGUS configuration fetched from "%s"\n' "${_url}"
       break
     fi

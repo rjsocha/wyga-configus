@@ -1,0 +1,3 @@
+#!/bin/bash
+docker run --quiet --privileged --rm tonistiigi/binfmt --install all &>/dev/null
+docker buildx inspect multiplatform-builder --bootstrap || docker buildx create --use --bootstrap --name multiplatform-builder
