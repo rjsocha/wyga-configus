@@ -1,4 +1,4 @@
 all: config-service
 
-config-service: main.c httpserver.h
-	musl-gcc -o config-service -s -O2 -static main.c
+config-service: src/configus.c src/httpserver.h
+	musl-gcc -o config-service -s -O2 -static src/configus.c

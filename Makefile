@@ -1,8 +1,8 @@
 REGISTRY = wyga/configus
-PLATFORMS = linux/amd64,linux/arm64/v8,linux/386,linux/arm/v7,linux/arm/v6
+PLATFORMS = linux/amd64,linux/arm64/v8
 BUILDX = docker buildx build --provenance false --platform $(PLATFORMS) --builder multiplatform-builder
 OUTPUT = --output type=image,push=true,compression=gzip,compression-level=9,force-compression=true
-TAG = 1.6.4
+TAG = 1.7.0
 
 all:
 	$(BUILDX) $(OUTPUT) -t $(REGISTRY):$(TAG) -t $(REGISTRY):latest --pull .

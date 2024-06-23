@@ -23,12 +23,16 @@
   #define APPARCH "???"
 #endif
 
+#define max(a,b) ({ __typeof__ (a) _a = (a);  __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
+#define min(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
+
 #define PONG      "PONG"
-#define VERSION   "1.6.X"
+#define VERSION   "1.7.0"
 
 #define CFGURL    "/cfg/"
 #define DEFAULT_CONFIG_DIR "/depot"
-#define OUTPUT_SIZE 512<<10
+#define MIN_OUTPUT_SIZE 16<<10
+#define MAX_OUTPUT_SIZE 256<<10
 
 int request_target_is(struct http_request_s* request, char const * target) {
   http_string_t url = http_request_target(request);
@@ -68,9 +72,9 @@ char *macro_replace(const char *start, const char *end, const char *default_star
 int macro_len=(int)(end-start);
 char *env_val;
 char* env_var;
-  ssize_t env_name_len = snprintf(NULL, 0, "MACRO_%.*s",macro_len,start);
+  ssize_t env_name_len = snprintf(NULL, 0, "%.*s",macro_len,start);
   if( env_var = malloc(env_name_len + 1) ) {
-    snprintf(env_var, env_name_len + 1, "MACRO_%.*s",macro_len,start);
+    snprintf(env_var, env_name_len + 1, "%.*s",macro_len,start);
     if( env_val = getenv(env_var) ) {
       int len = strlen(env_val);
       if( *size+len >= output_size ) len = output_size-*size-1;
@@ -89,7 +93,7 @@ char* env_var;
   return output;
 }
 
-// replaces @{{NAME}} with env variable ${MACRO_<NAME>}
+// replaces @{{NAME-default}} with env variable ${<NAME>}
 // based on https://github.com/bennoleslie/gettext/blob/master/gettext-runtime/src/envsubst.c
 long int macro_engine(char *input, char *output, long int output_size) {
 char *result;
@@ -181,10 +185,11 @@ char *config;
     if(size>0) {
       int fd;
       if( (fd=open(full_name,0)) >= 0 ) {
-        if( (input=calloc(size+1,sizeof(char))) && (buffer=calloc(OUTPUT_SIZE,sizeof(char))) ) {
+        int buffer_size = max(MIN_OUTPUT_SIZE, min(size*4, MAX_OUTPUT_SIZE));
+        if( (input=calloc(size+1,sizeof(char))) && (buffer=calloc(buffer_size,sizeof(char))) ) {
           if( read(fd,input,size) == size ) {
             input[size]=0;
-            *len=macro_engine(input,buffer,OUTPUT_SIZE);
+            *len=macro_engine(input,buffer,buffer_size);
           }
           free(input);
         }
@@ -198,16 +203,16 @@ char *config;
 }
 
 void handle_request(struct http_request_s* request) {
-struct sockaddr_in client;
-char ip[INET_ADDRSTRLEN];
-socklen_t len;
-int status = 200;
-time_t now;
-struct tm * timeinfo;
-char cfgfile[256];
-char *file = NULL;
-char date[40];
-int cfglen = strlen(CFGURL);
+  struct sockaddr_in client;
+  char ip[INET_ADDRSTRLEN];
+  socklen_t len;
+  int status = 200;
+  time_t now;
+  struct tm * timeinfo;
+  char cfgfile[256];
+  char *file = NULL;
+  char date[40];
+  int cfglen = strlen(CFGURL);
 
   http_request_connection(request, HTTP_CLOSE);
 
