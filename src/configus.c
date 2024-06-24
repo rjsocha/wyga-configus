@@ -27,7 +27,7 @@
 #define min(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
 #define PONG      "PONG"
-#define VERSION   "1.7.0"
+#define VERSION   "1.7.2"
 
 #define CFGURL    "/cfg/"
 #define DEFAULT_CONFIG_DIR "/depot"
@@ -96,9 +96,13 @@ char* env_var;
 // replaces @{{NAME-default}} with env variable ${<NAME>}
 // based on https://github.com/bennoleslie/gettext/blob/master/gettext-runtime/src/envsubst.c
 long int macro_engine(char *input, char *output, long int output_size) {
-char *result;
-long int size=0;
-  result=input;
+  char *result=input;
+  long int size=0;
+  const char *variable_start;
+  const char *variable_end;
+  const char *default_start;
+  const char *default_end;
+  char c;
   for (; *input != '\0';) {
     // copy proccessed input to output buffer
     if( result!=input ) {
@@ -112,26 +116,50 @@ long int size=0;
       }
     }
     // is this macro?
-    if (*input++ == '@') {
-      const char *variable_start;
-      const char *variable_end;
-      const char *default_start;
-      const char *default_end;
-      char c;
-
+    if (*input == '@') {
+      input++;
       if (*input++ != '{') continue;
       if (*input++ != '{') continue;
 
       variable_start = input;
       c = *input;
       if( (c >= 'A' && c <= 'Z') || c == '_' ) {
-        do
+        do {
           c = *++input;
-        while ((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_');
+        } while ((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_');
         variable_end = input;
         default_start = 0;
         default_end = 0;
         if ( *input == '-' ) {
+          input++;
+          default_start = input;
+          do
+            c=*++input;
+          while ( c && c != '}' );
+          default_end = input;
+        }
+        if (*input++ != '}') continue;
+        if (*input++ != '}') continue;
+        result=input;
+        output=macro_replace(variable_start, variable_end, default_start, default_end, output, &size, output_size);
+      }
+    } else if (*input++ == '{') {
+      // new macro format {{NAME=default}}
+      if (*input++ != '{') continue;
+      variable_start = input;
+      c = *input;
+      if( (c >= 'A' && c <= 'Z') ) {
+        while ( (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-' ) {
+          if ( c == '-' ) {
+            *input = '_';
+            c = '_';
+          }
+          c = *++input;
+        }
+        variable_end = input;
+        default_start = 0;
+        default_end = 0;
+        if ( *input == '=' ) {
           input++;
           default_start = input;
           do
