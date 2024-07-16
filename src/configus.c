@@ -27,10 +27,11 @@
 #define min(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
 #define PONG      "PONG"
-#define VERSION   "1.7.2"
+#define VERSION   "1.8.0"
 
 #define CFGURL    "/cfg/"
 #define DEFAULT_CONFIG_DIR "/depot"
+#define MAX_VAR_NAME 128
 #define MIN_OUTPUT_SIZE 16<<10
 #define MAX_OUTPUT_SIZE 256<<10
 
@@ -71,10 +72,10 @@ char c, lc=0;
 char *macro_replace(const char *start, const char *end, const char *default_start, const char *default_end, char *output, long int *size, long  int output_size) {
 int macro_len=(int)(end-start);
 char *env_val;
-char* env_var;
-  ssize_t env_name_len = snprintf(NULL, 0, "%.*s",macro_len,start);
-  if( env_var = malloc(env_name_len + 1) ) {
-    snprintf(env_var, env_name_len + 1, "%.*s",macro_len,start);
+char env_var[MAX_VAR_NAME + 6 + 1];
+  if ( macro_len <= MAX_VAR_NAME) {
+    snprintf(env_var, MAX_VAR_NAME + 6 + 1, "MACRO_%.*s",macro_len,start);
+    if( ! getenv(env_var) ) snprintf(env_var, MAX_VAR_NAME + 6 + 1, "%.*s",macro_len,start);
     if( env_val = getenv(env_var) ) {
       int len = strlen(env_val);
       if( *size+len >= output_size ) len = output_size-*size-1;
@@ -88,7 +89,8 @@ char* env_var;
       memcpy(output, default_start, len);
       output += len;
     }
-    free(env_var);
+  } else {
+    fprintf(stderr,"ERROR: VARIABLE NAME TOO LONG '%.*s' / %d MAX: %d\n", macro_len, start, macro_len, MAX_VAR_NAME);
   }
   return output;
 }
@@ -115,7 +117,7 @@ long int macro_engine(char *input, char *output, long int output_size) {
         result = input;
       }
     }
-    // is this macro?
+    // is this old macro style?
     if (*input == '@') {
       input++;
       if (*input++ != '{') continue;
